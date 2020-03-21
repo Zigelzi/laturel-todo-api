@@ -9,6 +9,9 @@ from api.config import DevConfig, Config
 app = Flask(__name__)
 app.config.from_object(DevConfig)
 
+# Enable CORS for all resources
+CORS(app, resources={r'/*': {'origins': '*'}})
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 # Flask-Marshmallow is used for serializing the DB objects to JSON.
