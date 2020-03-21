@@ -7,7 +7,7 @@ class Config(object):
     SECRET_KEY = os.getenv(f'SECRET_KEY', 'debugging')
 
     # Database settings
-    SQLALCHEMY_DATABASE_URI = os.getenv(f'DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = os.getenv(f'DATABASE_URL', 'sqlite://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
 
 class DevConfig(Config):
