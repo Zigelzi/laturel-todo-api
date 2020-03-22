@@ -5,7 +5,7 @@ from api import app
 def index():
     response_object = {
         'status': 'success',
-        'message': 'testing'
+        'message': 'This is JSON from the backend!'
     }
     json_object = jsonify(response_object)
     return make_response(json_object, 200)
