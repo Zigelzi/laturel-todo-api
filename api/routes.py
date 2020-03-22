@@ -1,7 +1,7 @@
 from flask import make_response, jsonify
 from api import app
 
-@app.route('/')
+@app.route('/api/sanity')
 def index():
     response_object = {
         'status': 'success',
