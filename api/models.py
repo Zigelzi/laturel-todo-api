@@ -8,5 +8,15 @@ class Project(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime)
 
+    def save(self):
+        db.session.add(self)
+
+    def delete(self):
+        db.session.delete(self)
+
+    @staticmethod
+    def get_all():
+        return Project.query.all()
+
     def __repr__(self):
         return f'<Project {self.name} | {self.description} | {self.created_at}>'
