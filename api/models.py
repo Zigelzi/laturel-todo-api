@@ -20,3 +20,11 @@ class Project(db.Model):
 
     def __repr__(self):
         return f'<Project {self.name} | {self.description} | {self.created_at}>'
+
+# ---------------------------------
+# Marshmallow serialization schemas
+# ---------------------------------
+
+class ProjectSchema(ma.ModelSchema):
+    class Meta:
+        model = Project
