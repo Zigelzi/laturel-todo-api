@@ -40,3 +40,19 @@ def add_project():
         db.session.rollback()
         json_response = jsonify(response_object)
         return make_response(json_response, 401)
+
+@app.route('/api/projects', methods=['GET'])
+def get_all_projects():
+    response_object = {'status': status_msg_success}
+    try:
+        all_projects = Project.query.all()
+        all_projects_json = projects_schema.dump(all_projects)
+        response_object['data'] = {}
+        response_object['data']['projects'] = all_projects_json
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to fetch projects'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 401)
