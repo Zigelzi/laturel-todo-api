@@ -24,7 +24,8 @@ class TestCase(unittest.TestCase):
             'name':'Test Project',
             'description': 'This is test project'
         }
-        self.corect_projects = [{
+
+        self.correct_projects = [{
             'name':'Test Project 1',
             'description': 'This is test project 1'
         },
@@ -32,7 +33,6 @@ class TestCase(unittest.TestCase):
             'name':'Test Project 2',
             'description': 'This is test project 2'
         }]
-        self.correct_project_json = json.dumps(self.correct_project)
 
         db.drop_all()
         db.create_all()
@@ -52,10 +52,13 @@ class TestCase(unittest.TestCase):
     def test_add_project_with_correct_data(self):
         # When
         response = self.add_project(self.correct_project)
-        json_data = response.get_json()
+        response_json_data = response.get_json()
 
         # Then
-        self.assertEqual(json_data['status'], 'success')
+        self.assertEqual(response_json_data['status'], 'success')
+        self.assertEqual(response_json_data['project']['name'], 'Test Project')
+        self.assertEqual(response_json_data['project']['description'], 'This is test project')
+        self.assertEqual(response_json_data['project']['id'], 1)
         self.assertEqual(response.status_code, 200)
     
     def test_add_project_with_incorrect_name(self):
@@ -70,10 +73,10 @@ class TestCase(unittest.TestCase):
                         headers=json_header,
                         data=incorrect_name_project_json
                     )
-        json_data = response.get_json()
+        response_json_data = response.get_json()
 
         # Then
-        self.assertEqual(json_data['status'], 'fail')
+        self.assertEqual(response_json_data['status'], 'fail')
         self.assertEqual(response.status_code, 401)
 
     def test_add_project_with_incorrect_description(self):
@@ -86,27 +89,63 @@ class TestCase(unittest.TestCase):
         response = self.app.post(
                         '/api/project',
                         headers=json_header,
-                        data=incorrect_description_project_json)
-        json_data = response.get_json()
+                        data=incorrect_description_project_json
+                        )
+        response_json_data = response.get_json()
 
         # Then
-        self.assertEqual(json_data['status'], 'fail')
+        self.assertEqual(response_json_data['status'], 'fail')
         self.assertEqual(response.status_code, 401)
 
     def test_get_many_projects(self):
         # Given
-        for project in self.corect_projects:
+        for project in self.correct_projects:
             self.add_project(project)
         
         # When
         response = self.app.get('/api/projects')
-        json_data = response.get_json()
+        response_json_data = response.get_json()
 
         # Then
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json_data['status'], 'success')
-        self.assertTrue(isinstance(json_data['projects'], list))
-        self.assertEqual(len(json_data['projects']), 2)
+        self.assertEqual(response_json_data['status'], 'success')
+        self.assertTrue(isinstance(response_json_data['projects'], list))
+        self.assertEqual(len(response_json_data['projects']), 2)
+
+    def test_delete_project_successfully(self):
+        # Given
+        add_project_response = self.add_project(self.correct_project)
+        add_project_response_json_data = add_project_response.get_json()
+        project = add_project_response_json_data['project']
+        project_id = project['id']
+
+        # When
+        response = self.app.delete(
+                        f'/api/project/{project_id}',
+                        headers=json_header,
+                        )
+        response_json_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_json_data['status'], 'success')
+
+    def test_delete_non_existing_project(self):
+        # Given
+        project_id = 1
+
+        # When
+        response = self.app.delete(
+                        f'/api/project/{project_id}',
+                        headers=json_header,
+                        )
+        response_json_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_json_data['status'], 'fail')
+        self.assertEqual(response_json_data['message'], 'Projects not found')
+
         
 
 if __name__ == "__main__":

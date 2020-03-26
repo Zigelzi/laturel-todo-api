@@ -30,7 +30,7 @@ def add_project():
         project = project_schema.load(request_data)
         project.save()
         db.session.commit()
-        response_object['data'] = project_schema.dump(project)
+        response_object['project'] = project_schema.dump(project)
         response_object['message'] = 'Project added succesfully!'
         json_response = jsonify(response_object)
         return make_response(json_response, 200)
@@ -56,3 +56,18 @@ def get_all_projects():
         response_object['message'] = 'Something went wrong when trying to fetch projects'
         json_response = jsonify(response_object)
         return make_response(json_response, 401)
+
+@app.route('/api/project/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    response_object = {'status': status_msg_success}
+    project = Project.query.get(project_id)
+    if project:
+        project.delete()
+        db.session.commit()
+        response_object['message'] = 'Projects deleted succesfully!'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    else:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Projects not found'
+        return make_response(jsonify(response_object), 404)
