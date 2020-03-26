@@ -105,8 +105,8 @@ class TestCase(unittest.TestCase):
         # Then
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json_data['status'], 'success')
-        self.assertTrue(isinstance(json_data['data']['projects'], list))
-        self.assertEqual(len(json_data['data']['projects']), 2)
+        self.assertTrue(isinstance(json_data['projects'], list))
+        self.assertEqual(len(json_data['projects']), 2)
         
 
 if __name__ == "__main__":

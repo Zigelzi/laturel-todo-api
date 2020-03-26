@@ -47,8 +47,8 @@ def get_all_projects():
     try:
         all_projects = Project.query.all()
         all_projects_json = projects_schema.dump(all_projects)
-        response_object['data'] = {}
-        response_object['data']['projects'] = all_projects_json
+        response_object['projects'] = all_projects_json
+        response_object['message'] = 'Projects queried succesfully!'
         json_response = jsonify(response_object)
         return make_response(json_response, 200)
     except Exception as e:
