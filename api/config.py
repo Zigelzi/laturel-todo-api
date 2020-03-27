@@ -10,6 +10,9 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.getenv(f'TODO_DATABASE_URL', 'sqlite:///')
     SQLALCHEMY_TRACK_MODIFICATIONS = False 
 
+    # CORS
+    CORS_HEADERS = 'Content-Type'
+
 class DevConfig(Config):
     # Development config with debugging enabled
     DEBUG = True

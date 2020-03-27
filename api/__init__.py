@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.config.from_object(DevConfig)
 
 # Enable CORS for all resources
-CORS(app, resources={r'/*': {'origins': '*'}})
+CORS(app, resources={r'/*': {'origins': 'http://localhost:5000'}})
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
