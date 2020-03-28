@@ -146,7 +146,42 @@ class TestCase(unittest.TestCase):
         self.assertEqual(response_json_data['status'], 'fail')
         self.assertEqual(response_json_data['message'], 'Projects not found')
 
-        
+    def test_get_single_project_successfully(self):
+        # Given there's existing project in database
+        add_project_response = self.add_project(self.correct_project)
+        add_project_response_json_data = add_project_response.get_json()
+        project = add_project_response_json_data['project']
+        project_id = project['id']
+
+        # When that project is queried
+        response = self.app.get(
+                        f'/api/project/{project_id}',
+                        headers=json_header
+                        )
+        response_json_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_json_data['status'], 'success')
+        self.assertEqual(response_json_data['message'], 'Project queried successfully!')
+        self.assertEqual(response_json_data['project'], project)
+
+    def test_get_non_existing_project(self):
+        # Given there's nothing in the database and we query non-existing project
+        project_id = 1
+
+        # When the project is queried
+        response = self.app.get(
+                        f'/api/project/{project_id}',
+                        headers=json_header
+                        )
+        response_json_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_json_data['status'], 'fail')
+        self.assertEqual(response_json_data['message'], 'Queried project was not found')
+
 
 if __name__ == "__main__":
     unittest.main(exit=False)

@@ -57,6 +57,29 @@ def get_all_projects():
         json_response = jsonify(response_object)
         return make_response(json_response, 401)
 
+@app.route('/api/project/<int:project_id>', methods=['GET'])
+def get_project(project_id):
+    response_object = {'status': status_msg_success}
+    project = Project.query.get(project_id)
+    try:
+        if project:
+            project_json = project_schema.dump(project)
+            response_object['project'] = project_json
+            response_object['message'] = 'Project queried successfully!'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 200)
+        elif project == None:
+            response_object['status'] = status_msg_fail
+            response_object['message'] = 'Queried project was not found'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 404)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to fetch project'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 401)
+        
+
 @app.route('/api/project/<int:project_id>', methods=['DELETE'])
 def delete_project(project_id):
     response_object = {'status': status_msg_success}
