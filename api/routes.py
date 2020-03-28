@@ -53,7 +53,6 @@ def get_all_projects():
         return make_response(json_response, 200)
     except Exception as e:
         response_object['status'] = status_msg_fail
-        traceback.print_exc()
         response_object['message'] = 'Something went wrong when trying to fetch projects'
         json_response = jsonify(response_object)
         return make_response(json_response, 401)
