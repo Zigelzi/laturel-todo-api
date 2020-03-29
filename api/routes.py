@@ -45,7 +45,7 @@ def add_project():
 def get_all_projects():
     response_object = {'status': status_msg_success}
     try:
-        all_projects = Project.query.all()
+        all_projects = Project.get_all()
         all_projects_json = projects_schema.dump(all_projects)
         response_object['projects'] = all_projects_json
         response_object['message'] = 'Projects queried succesfully!'
