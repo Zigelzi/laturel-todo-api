@@ -47,9 +47,9 @@ class TestProjects(unittest.TestCase):
         )
         return response
 
-    def _set_key_to_number_1(self, data_key):
+    def _set_key_to_number_999(self, data_key):
         incorrect_data = self.correct_project
-        incorrect_data[data_key] = 1
+        incorrect_data[data_key] = 999
         return incorrect_data
 
     def tearDown(self):
@@ -78,7 +78,7 @@ class TestProjects(unittest.TestCase):
     
     def test_add_project_with_incorrect_name(self):
         # Given we have project with incorrect type name
-        incorrect_name_project = self._set_key_to_number_1('name')
+        incorrect_name_project = self._set_key_to_number_999('name')
 
         # When we try to add the incorrect data to database
         response = self.add_project(incorrect_name_project)
@@ -91,10 +91,89 @@ class TestProjects(unittest.TestCase):
 
     def test_add_project_with_incorrect_description(self):
         # Given we have project with incorrect type description
-        incorrect_description_project = self._set_key_to_number_1('description')
+        incorrect_description_project = self._set_key_to_number_999('description')
 
         # When we try to add the incorrect data to database
         response = self.add_project(incorrect_description_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_no_name(self):
+        # Given there is project in database and we have project with no name
+        no_name_project = self.correct_project
+        no_name_project['name'] = None
+
+        # When new project with no name is added to empty database
+        response = self.add_project(no_name_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_incorrect_completed(self):
+        # Given there is project in database and we have project with incorrect name
+        incorrect_completed_project = self._set_key_to_number_999('completed')
+
+        # When new project with wrong type completed is submitted
+        response = self.add_project(incorrect_completed_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_incorrect_created_at(self):
+        # Given there is project in database and we have project with incorrect created_at
+        incorrect_created_at_project = self._set_key_to_number_999('created_at')
+
+        # When new project with wrong type completed is submitted
+        response = self.add_project(incorrect_created_at_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_incorrect_updated_at(self):
+        # Given there is project in database and we have project with incorrect updated_at
+        incorrect_updated_at_project = self._set_key_to_number_999('updated_at')
+
+        # When new project with wrong type completed is submitted
+        response = self.add_project(incorrect_updated_at_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_incorrect_planned_complete_date(self):
+        # Given there is project in database and we have project with incorrect planned_complete_date
+        incorrect_planned_complete_date_project = self._set_key_to_number_999('planned_complete_date')
+
+        # When new project with wrong type completed is submitted
+        response = self.add_project(incorrect_planned_complete_date_project)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
+
+    def test_add_project_with_incorrect_completed_at(self):
+        # Given there is project in database and we have project with incorrect completed_at
+        incorrect_completed_at_project = self._set_key_to_number_999('completed_at')
+
+        # When new project with wrong type completed is submitted
+        response = self.add_project(incorrect_completed_at_project)
         response_data = response.get_json()
 
         # Then
@@ -233,7 +312,7 @@ class TestTasks(unittest.TestCase):
         )
         return response
 
-    def _set_key_to_number_1(self, data_key):
+    def _set_key_to_number_999(self, data_key):
         incorrect_data = self.correct_task
         incorrect_data[data_key] = 999
         return incorrect_data
@@ -264,7 +343,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_name(self):
         # Given there is project in database and we have task with incorrect name
-        incorrect_name_task = self._set_key_to_number_1('name')
+        incorrect_name_task = self._set_key_to_number_999('name')
 
         # When new task with wrong type name is submitted
         response = self.add_task(incorrect_name_task)
@@ -291,7 +370,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_completed(self):
         # Given there is project in database and we have task with incorrect name
-        incorrect_completed_task = self._set_key_to_number_1('completed')
+        incorrect_completed_task = self._set_key_to_number_999('completed')
 
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_completed_task)
@@ -304,7 +383,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_created_at(self):
         # Given there is project in database and we have task with incorrect created_at
-        incorrect_created_at_task = self._set_key_to_number_1('created_at')
+        incorrect_created_at_task = self._set_key_to_number_999('created_at')
 
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_created_at_task)
@@ -317,7 +396,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_updated_at(self):
         # Given there is project in database and we have task with incorrect updated_at
-        incorrect_updated_at_task = self._set_key_to_number_1('updated_at')
+        incorrect_updated_at_task = self._set_key_to_number_999('updated_at')
 
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_updated_at_task)
@@ -330,7 +409,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_planned_complete_date(self):
         # Given there is project in database and we have task with incorrect planned_complete_date
-        incorrect_planned_complete_date_task = self._set_key_to_number_1('planned_complete_date')
+        incorrect_planned_complete_date_task = self._set_key_to_number_999('planned_complete_date')
 
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_planned_complete_date_task)
@@ -343,7 +422,7 @@ class TestTasks(unittest.TestCase):
 
     def test_add_task_with_incorrect_completed_at(self):
         # Given there is project in database and we have task with incorrect completed_at
-        incorrect_completed_at_task = self._set_key_to_number_1('completed_at')
+        incorrect_completed_at_task = self._set_key_to_number_999('completed_at')
 
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_completed_at_task)
