@@ -1,6 +1,9 @@
 from api import db, ma
 from datetime import datetime
 
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy.fields import Nested
+
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
@@ -29,7 +32,7 @@ class Project(db.Model):
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -37,7 +40,7 @@ class Task(db.Model):
     planned_complete_date = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
 
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
     
 
     def save(self):
@@ -51,12 +54,21 @@ class Task(db.Model):
         return Task.query.all()
 
     def __repr__(self):
-        return f'<Task {self.title} | created {self.created_at} | {self.completed} | completed {self.completed_at}>'
+        return f'<Task {self.name} | Created at {self.created_at} | {self.completed} | Completed at {self.completed_at}>'
 
 # ---------------------------------
 # Marshmallow serialization schemas
 # ---------------------------------
+class TaskSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Task
+        include_fk = True
+        load_instance = True
+        sqla_session = db.session
 
-class ProjectSchema(ma.ModelSchema):
+class ProjectSchema(SQLAlchemyAutoSchema):
+    tasks = Nested(TaskSchema, many=True)
     class Meta:
         model = Project
+        load_instance = True
+        sqla_session = db.session

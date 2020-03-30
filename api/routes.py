@@ -1,13 +1,19 @@
 from flask import make_response, jsonify, request
 import traceback
 from api import app, db
-from api.models import Project, ProjectSchema
+from api.models import (
+    Project, ProjectSchema,
+    Task, TaskSchema
+    )
 
 # ---------------------------------
 # Marshmallow serialization schemas
 # ---------------------------------
 project_schema = ProjectSchema()
 projects_schema = ProjectSchema(many=True)
+
+task_schema = TaskSchema()
+tasks_schema = TaskSchema(many=True)
 
 # Status message descriptions
 status_msg_fail = 'fail'
@@ -39,7 +45,7 @@ def add_project():
         response_object['message'] = 'Something went wrong when trying to add project'
         db.session.rollback()
         json_response = jsonify(response_object)
-        return make_response(json_response, 401)
+        return make_response(json_response, 400)
 
 @app.route('/api/projects', methods=['GET'])
 def get_all_projects():
@@ -55,7 +61,7 @@ def get_all_projects():
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to fetch projects'
         json_response = jsonify(response_object)
-        return make_response(json_response, 401)
+        return make_response(json_response, 400)
 
 @app.route('/api/project/<int:project_id>', methods=['GET'])
 def get_project(project_id):
@@ -77,7 +83,7 @@ def get_project(project_id):
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to fetch project'
         json_response = jsonify(response_object)
-        return make_response(json_response, 401)
+        return make_response(json_response, 400)
         
 
 @app.route('/api/project/<int:project_id>', methods=['DELETE'])
@@ -94,3 +100,23 @@ def delete_project(project_id):
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Projects not found'
         return make_response(jsonify(response_object), 404)
+
+@app.route('/api/task', methods=['POST'])
+def add_task():
+    response_object = {'status': status_msg_success}
+    try:
+        request_data = request.get_json()
+        task = task_schema.load(request_data)
+        task.save()
+        db.session.commit()
+        response_object['task'] = task_schema.dump(task)
+        response_object['message'] = 'Task added successfully!'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    except Exception as e:
+        #traceback.print_exc()
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to add task'
+        db.session.rollback()
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
