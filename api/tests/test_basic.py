@@ -179,8 +179,7 @@ class TestProjects(unittest.TestCase):
         # Then
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response_data['status'], 'fail')
-        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')
-        
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add project')    
 
     def test_get_many_projects(self):
         # Given there's multiple projects in database
@@ -269,7 +268,6 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Queried project was not found')
 
-
 class TestTasks(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
@@ -284,6 +282,13 @@ class TestTasks(unittest.TestCase):
         self.correct_task = {
             'name': 'Test Task'
         }
+
+        self.correct_tasks = [{
+            'name':'Test Task 1'
+        },
+        {
+            'name':'Test Task 2'
+        }]
 
         db.drop_all()
         db.create_all()
@@ -432,6 +437,94 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Something went wrong when trying to add task')
+
+    def test_get_many_tasks(self):
+        # Given there's multiple projects in database
+        for task in self.correct_tasks:
+            self.add_task(task)
+            
+        
+        # When we query all tasks
+        response = self.app.get('/api/tasks')
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertTrue(isinstance(response_data['tasks'], list))
+        self.assertEqual(len(response_data['tasks']), 2)
+
+    def test_delete_task_successfully(self):
+        # Given we have one task in the database
+        add_task_response = self.add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+
+        task = add_task_response_data['task']
+        task_id = task['id']
+
+        # When we delete that same task from the database
+        response = self.app.delete(
+            f'/api/task/{task_id}',
+            headers=json_header,
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+
+    def test_delete_non_existing_task(self):
+        # Given there's nothing in the database
+
+        # When we delete non-existing task ID
+        task_id = 1
+        response = self.app.delete(
+            f'/api/task/{task_id}',
+            headers=json_header,
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Task not found')
+
+    def test_get_single_task_successfully(self):
+        # Given there's existing task in database
+        add_task_response = self.add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+
+        task = add_task_response_data['task']
+        task_id = task['id']
+
+        # When that task is queried
+        response = self.app.get(
+            f'/api/task/{task_id}',
+            headers=json_header
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Task queried successfully!')
+        self.assertEqual(response_data['task'], task)
+
+    def test_get_non_existing_task(self):
+        # Given there's nothing in the database and we query non-existing task
+        task_id = 1
+
+        # When the task is queried
+        response = self.app.get(
+            f'/api/task/{task_id}',
+            headers=json_header
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Queried task was not found')
     
 
 if __name__ == "__main__":
