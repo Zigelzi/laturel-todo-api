@@ -34,6 +34,9 @@ class TestProjects(unittest.TestCase):
             'name':'Test Project 2',
             'description': 'This is test project 2'
         }]
+        self.correct_task = {
+            'name': 'Test task'
+        }
 
         db.drop_all()
         db.create_all()
@@ -46,6 +49,29 @@ class TestProjects(unittest.TestCase):
             data=project_json
         )
         return response
+
+    def add_task(self, project):
+        project_id = project['id']
+        task = self.correct_task
+        
+        task['project_id'] = project_id
+        task_json = json.dumps(task)
+        response = self.app.post(
+            '/api/task',
+            headers=json_header,
+            data=task_json
+        )
+        return response
+
+    def add_project_with_task(self):
+        add_project_response = self.add_project(self.correct_project)
+        add_project_response_data = add_project_response.get_json()
+        project = add_project_response_data['project']
+        add_task_response = self.add_task(project)
+        return project
+
+    
+    
 
     def _set_key_to_number_999(self, data_key):
         incorrect_data = self.correct_project
@@ -230,6 +256,22 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Projects not found')
+
+    def test_delete_project_with_tasks(self):
+        # Given there's project with related task
+        project = self.add_project_with_task()
+        project_id = project['id']
+
+        # When that project is attempted to be deleted
+        response = self.app.delete(
+            f'/api/project/{project_id}',
+            headers=json_header
+        )
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Projects contains related tasks, unable to delete')
 
     def test_get_single_project_successfully(self):
         # Given there's existing project in database

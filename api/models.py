@@ -23,6 +23,13 @@ class Project(db.Model):
     def delete(self):
         db.session.delete(self)
 
+    def has_tasks(self):
+        has_tasks = False
+        tasks = self.tasks.all()
+        if tasks != []:
+            has_tasks = True
+        return has_tasks
+
     @staticmethod
     def get_all():
         return Project.query.all()
