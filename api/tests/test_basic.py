@@ -70,9 +70,6 @@ class TestProjects(unittest.TestCase):
         add_task_response = self.add_task(project)
         return project
 
-    
-    
-
     def _set_key_to_number_999(self, data_key):
         incorrect_data = self.correct_project
         incorrect_data[data_key] = 999
@@ -251,6 +248,7 @@ class TestProjects(unittest.TestCase):
             headers=json_header,
         )
         response_data = response.get_json()
+        print(response_data)
 
         # Then
         self.assertEqual(response.status_code, 404)
@@ -267,6 +265,7 @@ class TestProjects(unittest.TestCase):
             f'/api/project/{project_id}',
             headers=json_header
         )
+        response_data = response.get_json()
 
         # Then
         self.assertEqual(response.status_code, 400)

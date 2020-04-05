@@ -65,12 +65,12 @@ def delete_project(project_id):
     response_object = {'status': status_msg_success}
     project = Project.query.get(project_id)
     try:
-        if project.has_tasks():
-            response_object['status'] = status_msg_fail
-            response_object['message'] = 'Projects contains related tasks, unable to delete'
-            json_response = jsonify(response_object)
-            return make_response(json_response, 400)
-        elif project:
+        if project:
+            if project.has_tasks():
+                response_object['status'] = status_msg_fail
+                response_object['message'] = 'Projects contains related tasks, unable to delete'
+                json_response = jsonify(response_object)
+                return make_response(json_response, 400)
             project.delete()
             db.session.commit()
             response_object['message'] = 'Projects deleted succesfully!'
@@ -81,6 +81,7 @@ def delete_project(project_id):
             response_object['message'] = 'Projects not found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
+        traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to delete project'
         json_response = jsonify(response_object)
