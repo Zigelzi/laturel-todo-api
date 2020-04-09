@@ -4,6 +4,11 @@ from datetime import datetime
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow_sqlalchemy.fields import Nested
 
+assignees_for_tasks = db.Table('assignees_for_tasks',
+    db.Column('assignee_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('task_id', db.Integer, db.ForeignKey('task.id'))
+    )
+
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
@@ -51,6 +56,11 @@ class Task(db.Model):
     assignee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     comments = db.relationship('Comment', backref='task', lazy='dynamic')
+    assignees = db.relationship('User',
+        secondary=assignees_for_tasks,
+        backref=db.backref('tasks', lazy='dynamic'),
+        lazy='dynamic'
+        )
 
     def save(self):
         db.session.add(self)
@@ -69,7 +79,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
-    tasks = db.relationship('Task', backref='assignee', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
     def save(self):
