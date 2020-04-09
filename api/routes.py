@@ -81,7 +81,6 @@ def delete_project(project_id):
             response_object['message'] = 'Projects not found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
-        traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to delete project'
         json_response = jsonify(response_object)
@@ -116,7 +115,6 @@ def add_task():
         json_response = jsonify(response_object)
         return make_response(json_response, 200)
     except Exception as e:
-        # traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to add task'
         db.session.rollback()

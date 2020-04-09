@@ -48,7 +48,9 @@ class Task(db.Model):
     completed_at = db.Column(db.DateTime)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    assignee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
+    comments = db.relationship('Comment', backref='task', lazy='dynamic')
 
     def save(self):
         db.session.add(self)
@@ -63,10 +65,70 @@ class Task(db.Model):
     def __repr__(self):
         return f'<Task {self.name} | Created at {self.created_at} | {self.completed} | Completed at {self.completed_at}>'
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+
+    tasks = db.relationship('Task', backref='assignee', lazy='dynamic')
+    comments = db.relationship('Comment', backref='author', lazy='dynamic')
+
+    def save(self):
+        db.session.add(self)
+
+    def delete(self):
+        db.session.delete(self)
+
+    @staticmethod
+    def get_all():
+        User.query.all()
+
+    def __repr__(self):
+        return f'<User {self.name}>'
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(300), nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime)
+
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    task_id = db.Column(db.Integer, db.ForeignKey('task.id'))
+
+    def save(self):
+        db.session.add(self)
+
+    def delete(self):
+        db.session.delete(self)
+
+    @staticmethod
+    def get_all():
+        Comment.query.all()
+
+    def __repr__(self):
+        return f'<Comment {self.content} | Created at {self.created_at} | Updated at {self.updated_at}>'
+
 # ---------------------------------
 # Marshmallow serialization schemas
 # ---------------------------------
+class CommentSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Comment
+        include_fk = True
+        load_instance = True
+        sqla_session = db.session
+
+
+class AssigneeSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        include_fk = True
+        load_instance = True
+        sqla_session = db.session
+
 class TaskSchema(SQLAlchemyAutoSchema):
+    comments = Nested(CommentSchema, many=True)
+    assignees = Nested(AssigneeSchema, many=True)
     class Meta:
         model = Task
         include_fk = True
@@ -79,3 +141,4 @@ class ProjectSchema(SQLAlchemyAutoSchema):
         model = Project
         load_instance = True
         sqla_session = db.session
+

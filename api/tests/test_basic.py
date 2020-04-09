@@ -248,7 +248,6 @@ class TestProjects(unittest.TestCase):
             headers=json_header,
         )
         response_data = response.get_json()
-        print(response_data)
 
         # Then
         self.assertEqual(response.status_code, 404)
