@@ -89,7 +89,7 @@ class User(db.Model):
 
     @staticmethod
     def get_all():
-        User.query.all()
+        return User.query.all()
 
     def __repr__(self):
         return f'<User {self.name}>'
@@ -128,7 +128,7 @@ class CommentSchema(SQLAlchemyAutoSchema):
         sqla_session = db.session
 
 
-class AssigneeSchema(SQLAlchemyAutoSchema):
+class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
         include_fk = True
@@ -137,7 +137,7 @@ class AssigneeSchema(SQLAlchemyAutoSchema):
 
 class TaskSchema(SQLAlchemyAutoSchema):
     comments = Nested(CommentSchema, many=True)
-    assignees = Nested(AssigneeSchema, many=True)
+    assignees = Nested(UserSchema, many=True)
     class Meta:
         model = Task
         include_fk = True

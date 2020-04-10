@@ -3,7 +3,9 @@ import traceback
 from api import app, db
 from api.models import (
     Project, ProjectSchema,
-    Task, TaskSchema
+    Task, TaskSchema,
+    User, UserSchema,
+    Comment, CommentSchema
     )
 
 # ---------------------------------
@@ -14,6 +16,9 @@ projects_schema = ProjectSchema(many=True)
 
 task_schema = TaskSchema()
 tasks_schema = TaskSchema(many=True)
+
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
 
 # Status message descriptions
 status_msg_fail = 'fail'
@@ -73,12 +78,12 @@ def delete_project(project_id):
                 return make_response(json_response, 400)
             project.delete()
             db.session.commit()
-            response_object['message'] = 'Projects deleted succesfully!'
+            response_object['message'] = 'Project deleted succesfully!'
             json_response = jsonify(response_object)
             return make_response(json_response, 200)
         else:
             response_object['status'] = status_msg_fail
-            response_object['message'] = 'Projects not found'
+            response_object['message'] = 'Project not found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
         response_object['status'] = status_msg_fail
@@ -177,5 +182,88 @@ def get_all_tasks():
     except Exception as e:
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to fetch tasks'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
+@app.route('/api/user', methods=['POST'])
+def add_user():
+    response_object = {'status': status_msg_success}
+    try:
+        request_data = request.get_json()
+        if request_data['name'] == '':
+            response_object['status'] = status_msg_fail
+            response_object['message'] = 'User name can\'t be empty'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 400)
+        user = user_schema.load(request_data)
+        user.save()
+        db.session.commit()
+        response_object['user'] = user_schema.dump(user)
+        response_object['message'] = 'User added succesfully!'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to add user'
+        db.session.rollback()
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
+@app.route('/api/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    response_object = {'status': status_msg_success}
+    user = User.query.get(user_id)
+    try:
+        if user:
+            user_json = user_schema.dump(user)
+            response_object['user'] = user_json
+            response_object['message'] = 'User queried successfully!'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 200)
+        elif user == None:
+            response_object['status'] = status_msg_fail
+            response_object['message'] = 'Queried user was not found'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 404)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to fetch user'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
+@app.route('/api/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    response_object = {'status': status_msg_success}
+    user = User.query.get(user_id)
+    try:
+        if user:
+            user.delete()
+            db.session.commit()
+            response_object['message'] = 'User deleted succesfully!'
+            json_response = jsonify(response_object)
+            return make_response(json_response, 200)
+        else:
+            response_object['status'] = status_msg_fail
+            response_object['message'] = 'User not found'
+            return make_response(jsonify(response_object), 404)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to delete user'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
+@app.route('/api/users', methods=['GET'])
+def get_all_user():
+    response_object = {'status': status_msg_success}
+    try:
+        all_users = User.get_all()
+        all_user_json = users_schema.dump(all_users)
+        response_object['users'] = all_user_json
+        response_object['message'] = 'Users queried succesfully!'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to fetch user'
         json_response = jsonify(response_object)
         return make_response(json_response, 400)

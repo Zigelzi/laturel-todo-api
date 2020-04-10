@@ -237,6 +237,7 @@ class TestProjects(unittest.TestCase):
         # Then
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Project deleted succesfully!')
 
     def test_delete_non_existing_project(self):
         # Given there's nothing in the database
@@ -252,7 +253,7 @@ class TestProjects(unittest.TestCase):
         # Then
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response_data['status'], 'fail')
-        self.assertEqual(response_data['message'], 'Projects not found')
+        self.assertEqual(response_data['message'], 'Project not found')
 
     def test_delete_project_with_tasks(self):
         # Given there's project with related task
@@ -566,7 +567,204 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Queried task was not found')
     
+class TestUser(unittest.TestCase):
 
+    def setUp(self):
+        app.config['TESTING'] = True
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{basedir}/tests/{test_db_name}'
+
+        self.app = app.test_client()
+        self.correct_user = {
+            'name': 'Matti Meikäläinen'
+        }
+        self.correct_users = [
+            {
+                'name': 'Masa'
+            },
+            {
+                'name': 'Erkki Esimerkki'
+            }
+        ]
+
+        db.drop_all()
+        db.create_all()
+
+    def tearDown(self):
+        db.drop_all()
+
+    def _add_user(self, user):
+        user_json = json.dumps(user)
+        response = self.app.post(
+            '/api/user',
+            headers=json_header,
+            data=user_json
+        )
+        return response
+
+    def _get_user(self, user_id):
+        response = self.app.get(
+            f'/api/user/{user_id}',
+            headers=json_header
+        )
+        return response
+
+    def _set_key_to_number_999(self, data_key):
+        incorrect_data = self.correct_user
+        incorrect_data[data_key] = 999
+        return incorrect_data
+
+    def test_add_user_with_correct_data(self):
+        # Given there's nothing in the database
+
+        # When we add user with correct data
+        response = self._add_user(self.correct_user)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'User added succesfully!')
+
+        self.assertEqual(response_data['user']['id'], 1)
+        self.assertEqual(response_data['user']['name'], 'Matti Meikäläinen')
+
+    def test_add__user_incorrect_name(self):
+        # Given we have user with incorrect type in name key
+        incorrect_name_user = self._set_key_to_number_999('name')
+
+        # When we try to add the incorrect data to database
+        response = self._add_user(incorrect_name_user)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add user')
+
+    def test_add_user_with_no_name(self):
+        # Given we have user with empty string as name
+        no_name_user = self.correct_user
+        no_name_user['name'] = ''
+
+        # When we try to add the user to database
+        response = self._add_user(no_name_user)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'User name can\'t be empty')
+
+
+    def test_get_single_user_successfully(self):
+        # Given there's existing user in the database
+        add_user_response = self._add_user(self.correct_user)
+        add_user_response_data = add_user_response.get_json()
+
+        user = add_user_response_data['user']
+        user_id = user['id']
+
+        # When that user is queried
+        response = self._get_user(user_id)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'User queried successfully!')
+        self.assertEqual(response_data['user'], user)
+
+    def test_get_non_existing_user(self):
+        # Given there's nothing in the database
+
+        # When we query user id that doesn't exist
+        user_id = 1
+        response = self._get_user(user_id)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Queried user was not found')
+
+    def test_get_user_with_string_user_id(self):
+        # Given there's existing user in the database
+        self._add_user(self.correct_user)
+
+        # When we query with invalid user_id
+        user_id = 'asd'
+        response = self._get_user(user_id)
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.', response.data)
+
+    def test_get_user_with_no_user_id(self):
+        # Given there's existing user in the database
+        self._add_user(self.correct_user)
+
+        # When we query with invalid user_id
+        user_id = ''
+        response = self._get_user(user_id)
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.', response.data)
+
+
+    def test_get_many_users(self):
+        # Given there's multiple projects in database
+        for user in self.correct_users:
+            res = self._add_user(user)
+        
+        # When we query all users
+        response = self.app.get('/api/users')
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertTrue(isinstance(response_data['users'], list))
+        self.assertEqual(len(response_data['users']), 2)
+
+    def test_delete_user_successfully(self):
+        # Given we have one user in the database
+        add_user_response = self._add_user(self.correct_user)
+        add_user_response_data = add_user_response.get_json()
+
+        user = add_user_response_data['user']
+        user_id = user['id']
+
+        # When we delete that same user from the database
+        response = self.app.delete(
+            f'/api/user/{user_id}',
+            headers=json_header,
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'User deleted succesfully!')
+
+
+    def test_delete_non_existing_user(self):
+        # Given there's nothing in the database
+
+        # When we delete non-existing user ID
+        user_id = 1
+        response = self.app.delete(
+            f'/api/user/{user_id}',
+            headers=json_header,
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'User not found')
+
+    
 if __name__ == "__main__":
     unittest.main(exit=False)
     # Remove the SQLITE test db after tests have ran
