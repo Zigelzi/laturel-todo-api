@@ -185,6 +185,25 @@ def get_all_tasks():
         json_response = jsonify(response_object)
         return make_response(json_response, 400)
 
+@app.route('/api/task/add_assignee', methods=['POST'])
+def add_assignee_to_task():
+    response_object = {'status': status_msg_success}
+    try:
+        request_data = request.get_json()
+        task = task_schema.load(request_data['task'])
+        assignee = user_schema.load(request_data['user'])
+        task = Task.query.get(task.id)
+        task.add_assignee(assignee)
+        db.session.commit()
+        response_object['task'] = task_schema.dump(task)
+        json_response = jsonify(response_object)
+        return make_response(json_response, 200)
+    except Exception as e:
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to add assignee to task'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
 @app.route('/api/user', methods=['POST'])
 def add_user():
     response_object = {'status': status_msg_success}

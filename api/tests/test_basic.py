@@ -331,6 +331,10 @@ class TestTasks(unittest.TestCase):
             'name':'Test Task 2'
         }]
 
+        self.correct_assignee = {
+            'name': "Matti Meikäläinen"
+        }
+
         db.drop_all()
         db.create_all()
     
@@ -355,6 +359,22 @@ class TestTasks(unittest.TestCase):
             '/api/task',
             headers=json_header,
             data=task_json
+        )
+        return response
+
+    def _add_user(self, user):
+        user_json = json.dumps(user)
+        response = self.app.post(
+            '/api/user',
+            headers=json_header,
+            data=user_json
+        )
+        return response
+
+    def _get_user(self, user_id):
+        response = self.app.get(
+            f'/api/user/{user_id}',
+            headers=json_header
         )
         return response
 
@@ -386,6 +406,24 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['task']['planned_complete_date'], None)
 
         self.assertEqual(response_data['task']['project_id'], project_id)
+
+    def test_add_task_without_project(self):
+        # Given there's nothing in the database
+
+        # When we try to add task without project_id foreign key
+        task_without_project = self.correct_task
+        task_without_project_json = json.dumps(task_without_project)
+        response = self.app.post(
+            '/api/task',
+            headers=json_header,
+            data=task_without_project_json
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add task')
 
     def test_add_task_with_incorrect_name(self):
         # Given there is project in database and we have task with incorrect name
@@ -460,7 +498,7 @@ class TestTasks(unittest.TestCase):
         # When new task with wrong type completed is submitted
         response = self.add_task(incorrect_planned_complete_date_task)
         response_data = response.get_json()
-
+    
         # Then
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response_data['status'], 'fail')
@@ -478,6 +516,49 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Something went wrong when trying to add task')
+
+    def add_assignee_to_task(self):
+        # Given there's existing user and task in the DB
+        add_task_response = self.add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        add_assignee_response = self._add_user(self.correct_assignee)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+
+        # Merging the two dictionaries together
+        task_and_assignee = {
+            **task,
+            **assignee
+        }
+        task_and_assignee_json = json.dumps(task_and_assignee)
+
+        # When we add assignee to existing task
+        response = self.app.post(
+            f'/api/task/add_assignee',
+            headers=json_header,
+            data=task_and_assignee_json
+        )
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Assignee added successfully!')
+
+        self.assertEqual(response_data['task']['id'], 1)
+        self.assertEqual(response_data['task']['name'], 'Test Task')
+        self.assertEqual(response_data['task']['completed'], False)
+
+        self.assertEqual(response_data['task']['updated_at'], None)
+        self.assertEqual(response_data['task']['planned_complete_date'], None)
+        self.assertEqual(response_data['task']['planned_complete_date'], None)
+
+        self.assertTrue(isinstance(response_data['task']['assignees']), list)
+        self.assertEqual(len(response_data['task']['assignees']), 1)
+        self.assertEqual(response_data['task']['assignees'][0], assignee)
+
 
     def test_get_many_tasks(self):
         # Given there's multiple projects in database
@@ -578,12 +659,8 @@ class TestUser(unittest.TestCase):
             'name': 'Matti Meikäläinen'
         }
         self.correct_users = [
-            {
-                'name': 'Masa'
-            },
-            {
-                'name': 'Erkki Esimerkki'
-            }
+            {'name': 'Masa'},
+            {'name': 'Erkki Esimerkki'}
         ]
 
         db.drop_all()
@@ -628,7 +705,7 @@ class TestUser(unittest.TestCase):
         self.assertEqual(response_data['user']['id'], 1)
         self.assertEqual(response_data['user']['name'], 'Matti Meikäläinen')
 
-    def test_add__user_incorrect_name(self):
+    def test_add_user_incorrect_name(self):
         # Given we have user with incorrect type in name key
         incorrect_name_user = self._set_key_to_number_999('name')
 
@@ -699,7 +776,7 @@ class TestUser(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertIn(b'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.', response.data)
 
-    def test_get_user_with_no_user_id(self):
+    def test_get_user_with_no_use1r_id(self):
         # Given there's existing user in the database
         self._add_user(self.correct_user)
 

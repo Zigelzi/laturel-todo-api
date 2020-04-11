@@ -72,6 +72,10 @@ class Task(db.Model):
     def get_all():
         return Task.query.all()
 
+    def add_assignee(self, assignee):
+        self.assignees.append(assignee)
+        db.session.add(self)
+
     def __repr__(self):
         return f'<Task {self.name} | Created at {self.created_at} | {self.completed} | Completed at {self.completed_at}>'
 
