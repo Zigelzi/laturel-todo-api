@@ -192,8 +192,16 @@ def add_assignee_to_task():
         request_data = request.get_json()
         task = task_schema.load(request_data['task'])
         assignee = user_schema.load(request_data['user'])
+
         task = Task.query.get(task.id)
+        assignee = User.query.get(assignee.id)
         if task:
+            task_assignees = task.assignees.all()
+            if assignee and (assignee in task_assignees):
+                response_object['status'] = status_msg_fail
+                response_object['message'] = 'Assignee already assigned to this task'
+                json_response = jsonify(response_object)
+                return make_response(json_response, 400)
             task.add_assignee(assignee)
             db.session.commit()
             response_object['task'] = task_schema.dump(task)
@@ -205,6 +213,9 @@ def add_assignee_to_task():
             response_object['message'] = 'Task that assignee was tried to be added to wasn\'t found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
+        request_data = request.get_json()
+        traceback.print_exc()
+        print(request_data)
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to add assignee to task'
         json_response = jsonify(response_object)
