@@ -357,6 +357,38 @@ class TestProjects(BaseTest):
         self.assertEqual(response_data['message'], 'Queried project was not found')
 
 class TestTasks(BaseTest):
+    def _add_assignee_to_task(self, user, task):
+        # Merging the two dictionaries together
+        assignee_and_task = {
+            'user': user,
+            'task': task
+        }
+        assignee_and_task_json = json.dumps(assignee_and_task)    
+
+        # When we add assignee to existing task
+        response = self.app.post(
+            f'/api/task/assignee',
+            headers=json_header,
+            data=assignee_and_task_json
+        )
+        return response
+
+    def _remove_assignee_from_task(self, user, task):
+        # Merging the two dictionaries together
+        assignee_and_task = {
+            'user': user,
+            'task': task
+        }
+        assignee_and_task_json = json.dumps(assignee_and_task) 
+
+        # When we add assignee to existing task
+        response = self.app.delete(
+            f'/api/task/assignee',
+            headers=json_header,
+            data=assignee_and_task_json
+        )
+        return response
+
     def test_add_task_with_correct_data(self):
         # Given there's project in database
 
@@ -490,27 +522,16 @@ class TestTasks(BaseTest):
 
     def test_add_assignee_to_task(self):
         # Given there's existing user and task in the DB
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
         add_task_response = self._add_task(self.correct_task)
         add_task_response_data = add_task_response.get_json()
         task = add_task_response_data['task']
 
-        add_assignee_response = self._add_user(self.correct_user)
-        add_assignee_response_data = add_assignee_response.get_json()
-        assignee = add_assignee_response_data['user']
-
-        # Merging the two dictionaries together
-        task_and_assignee = {
-            'task': task,
-            'user': assignee
-        }
-        task_and_assignee_json = json.dumps(task_and_assignee)    
-
         # When we add assignee to existing task
-        response = self.app.post(
-            f'/api/task/add_assignee',
-            headers=json_header,
-            data=task_and_assignee_json
-        )
+        response = self._add_assignee_to_task(assignee, task)
         response_data = response.get_json()
 
         # Then
@@ -531,14 +552,200 @@ class TestTasks(BaseTest):
         self.assertEqual(response_data['task']['assignees'][0], assignee)
 
     def test_add_assignee_to_task_without_task(self):
-        return
+        # Given there's existing user in the DB
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+
+        task = {}
+
+        # When we try to add assignee without task information
+        response = self._add_assignee_to_task(assignee, task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add assignee to task')
 
     def test_add_assignee_to_task_without_assignee(self):
-        return
+        # Given there's existing user in the DB
+        assignee = {}
+
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        # When we try to add assignee without task information
+        response = self._add_assignee_to_task(assignee, task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add assignee to task')
+
+    def test_add_assignee_to_task_without_assignee_and_task(self):
+        # Given there's existing user in the DB
+        assignee = {}
+        task = {}
+
+        # When we try to add assignee without task information
+        response = self._add_assignee_to_task(assignee, task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to add assignee to task')
+
+    def test_add_assignee_to_nonexisting_task(self):
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        non_existing_task = task
+        non_existing_task['id'] = 2
+
+        # When we try to add assignee to task that doesn't exist
+        response = self._add_assignee_to_task(assignee, non_existing_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Task that assignee was tried to be added to wasn\'t found')
 
     def test_remove_assignee_from_task(self):
-        return
+        # Given there's existing task with assignee
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
 
+        add_assignee_response = self._add_assignee_to_task(assignee, task)
+        add_assignee_response_data = add_assignee_response.get_json()
+        task_with_assignee = add_assignee_response_data['task']
+
+        # When we add assignee to existing task
+        response = self._remove_assignee_from_task(assignee, task_with_assignee)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Assignee removed successfully!')
+
+        self.assertEqual(response_data['task']['id'], 1)
+        self.assertEqual(response_data['task']['name'], 'Test task')
+        self.assertEqual(response_data['task']['completed'], False)
+
+        self.assertEqual(response_data['task']['updated_at'], None)
+        self.assertEqual(response_data['task']['planned_complete_date'], None)
+        self.assertEqual(response_data['task']['planned_complete_date'], None)
+
+        self.assertTrue(isinstance(response_data['task']['assignees'], list))
+        self.assertEqual(len(response_data['task']['assignees']), 0)
+
+    def test_remove_assignee_from_task_without_task(self):
+        # Given there's existing task with assignee
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        add_assignee_response = self._add_assignee_to_task(assignee, task)
+
+        empty_task = {}
+
+        # When we add assignee to existing task
+        response = self._remove_assignee_from_task(assignee, empty_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to remove assignee from task')
+
+    def test_remove_assignee_from_task_without_assignee(self):
+        # Given there's existing task with assignee
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        add_assignee_response = self._add_assignee_to_task(assignee, task)
+
+        empty_assignee = {}
+
+        # When we remove assignee to existing task
+        response = self._remove_assignee_from_task(empty_assignee, task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to remove assignee from task')
+
+    def test_remove_assignee_from_task_without_assignee_and_task(self):
+        # Given there's existing task with assignee
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        add_assignee_response = self._add_assignee_to_task(assignee, task)
+
+        empty_assignee = {}
+        empty_task = {}
+
+        # When we remove assignee to existing task
+        response = self._remove_assignee_from_task(empty_assignee, empty_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to remove assignee from task')
+
+    def test_remove_assignee_from_nonexisting_task(self):
+        add_assignee_response = self._add_user(self.correct_user)
+        add_assignee_response_data = add_assignee_response.get_json()
+        assignee = add_assignee_response_data['user']
+        
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        task = add_task_response_data['task']
+
+        add_assignee_response = self._add_assignee_to_task(assignee, task)
+
+        non_existing_task = task
+        non_existing_task['id'] = 2
+
+        # When we remove assignee to non existing task
+        response = self._remove_assignee_from_task(assignee, non_existing_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Task that assignee was tried to be removed from wasn\'t found')
 
     def test_get_many_tasks(self):
         # Given there's multiple projects in database
