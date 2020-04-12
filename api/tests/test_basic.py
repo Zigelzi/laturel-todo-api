@@ -15,7 +15,7 @@ from api.models import Project
 
 json_header = {"Content-Type": "application/json"}
 
-class TestProjects(unittest.TestCase):
+class BaseTest(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{basedir}/tests/{test_db_name}'
@@ -38,21 +38,50 @@ class TestProjects(unittest.TestCase):
             'name': 'Test task'
         }
 
+        self.correct_tasks = [{
+            'name':'Test Task 1'
+        },
+        {
+            'name':'Test Task 2'
+        }]
+
+        self.correct_user = {
+            'name': "Matti Meikäläinen"
+        }
+
+        self.correct_users = [
+            {'name': 'Masa'},
+            {'name': 'Erkki Esimerkki'}
+        ]
+
         db.drop_all()
         db.create_all()
 
-    def add_project(self, project):
-        project_json = json.dumps(project)
+    def tearDown(self):
+        db.drop_all()
+
+    def _set_key_to_number_999(self, data_key):
+        incorrect_data = self.correct_project
+        incorrect_data[data_key] = 999
+        return incorrect_data
+
+    def _add_user(self, user):
+        user_json = json.dumps(user)
         response = self.app.post(
-            '/api/project',
+            '/api/user',
             headers=json_header,
-            data=project_json
+            data=user_json
         )
         return response
 
-    def add_task(self, project):
-        project_id = project['id']
-        task = self.correct_task
+    def _add_task(self, task):
+        project_id = None
+        if 'project_id' not in task:
+            add_project_response_data = self._add_project_for_task()
+            if 'project' in add_project_response_data:
+                project_id = add_project_response_data['project']['id']
+        else:
+            project_id = task['project_id']
         
         task['project_id'] = project_id
         task_json = json.dumps(task)
@@ -63,26 +92,44 @@ class TestProjects(unittest.TestCase):
         )
         return response
 
-    def add_project_with_task(self):
-        add_project_response = self.add_project(self.correct_project)
+    def _add_project_for_task(self):
+        project_json = json.dumps(self.correct_project)
+        response = self.app.post(
+            '/api/project',
+            headers=json_header,
+            data=project_json
+        )
+        response_data = response.get_json()
+        return response_data
+
+
+class TestProjects(BaseTest):
+    def _add_project(self, project):
+        project_json = json.dumps(project)
+        response = self.app.post(
+            '/api/project',
+            headers=json_header,
+            data=project_json
+        )
+        return response
+
+    def _add_project_with_task(self):
+        add_project_response = self._add_project(self.correct_project)
         add_project_response_data = add_project_response.get_json()
         project = add_project_response_data['project']
-        add_task_response = self.add_task(project)
+
+        task = {
+            'name': 'Test task',
+            'project_id': project['id']
+        }
+        add_task_response = self._add_task(task)
         return project
 
-    def _set_key_to_number_999(self, data_key):
-        incorrect_data = self.correct_project
-        incorrect_data[data_key] = 999
-        return incorrect_data
-
-    def tearDown(self):
-        db.drop_all()
-    
     def test_add_project_with_correct_data(self):
         # Given there's nothing in the database
 
         # When we add project with correct data
-        response = self.add_project(self.correct_project)
+        response = self._add_project(self.correct_project)
         response_data = response.get_json()
 
         # Then
@@ -104,7 +151,7 @@ class TestProjects(unittest.TestCase):
         incorrect_name_project = self._set_key_to_number_999('name')
 
         # When we try to add the incorrect data to database
-        response = self.add_project(incorrect_name_project)
+        response = self._add_project(incorrect_name_project)
         response_data = response.get_json()
 
         # Then
@@ -117,7 +164,7 @@ class TestProjects(unittest.TestCase):
         incorrect_description_project = self._set_key_to_number_999('description')
 
         # When we try to add the incorrect data to database
-        response = self.add_project(incorrect_description_project)
+        response = self._add_project(incorrect_description_project)
         response_data = response.get_json()
 
         # Then
@@ -131,7 +178,7 @@ class TestProjects(unittest.TestCase):
         no_name_project['name'] = None
 
         # When new project with no name is added to empty database
-        response = self.add_project(no_name_project)
+        response = self._add_project(no_name_project)
         response_data = response.get_json()
 
         # Then
@@ -144,7 +191,7 @@ class TestProjects(unittest.TestCase):
         incorrect_completed_project = self._set_key_to_number_999('completed')
 
         # When new project with wrong type completed is submitted
-        response = self.add_project(incorrect_completed_project)
+        response = self._add_project(incorrect_completed_project)
         response_data = response.get_json()
 
         # Then
@@ -157,7 +204,7 @@ class TestProjects(unittest.TestCase):
         incorrect_created_at_project = self._set_key_to_number_999('created_at')
 
         # When new project with wrong type completed is submitted
-        response = self.add_project(incorrect_created_at_project)
+        response = self._add_project(incorrect_created_at_project)
         response_data = response.get_json()
 
         # Then
@@ -170,7 +217,7 @@ class TestProjects(unittest.TestCase):
         incorrect_updated_at_project = self._set_key_to_number_999('updated_at')
 
         # When new project with wrong type completed is submitted
-        response = self.add_project(incorrect_updated_at_project)
+        response = self._add_project(incorrect_updated_at_project)
         response_data = response.get_json()
 
         # Then
@@ -183,7 +230,7 @@ class TestProjects(unittest.TestCase):
         incorrect_planned_complete_date_project = self._set_key_to_number_999('planned_complete_date')
 
         # When new project with wrong type completed is submitted
-        response = self.add_project(incorrect_planned_complete_date_project)
+        response = self._add_project(incorrect_planned_complete_date_project)
         response_data = response.get_json()
 
         # Then
@@ -196,7 +243,7 @@ class TestProjects(unittest.TestCase):
         incorrect_completed_at_project = self._set_key_to_number_999('completed_at')
 
         # When new project with wrong type completed is submitted
-        response = self.add_project(incorrect_completed_at_project)
+        response = self._add_project(incorrect_completed_at_project)
         response_data = response.get_json()
 
         # Then
@@ -207,7 +254,7 @@ class TestProjects(unittest.TestCase):
     def test_get_many_projects(self):
         # Given there's multiple projects in database
         for project in self.correct_projects:
-            self.add_project(project)
+            self._add_project(project)
         
         # When we query all projects
         response = self.app.get('/api/projects')
@@ -221,7 +268,7 @@ class TestProjects(unittest.TestCase):
 
     def test_delete_project_successfully(self):
         # Given we have one project in the database
-        add_project_response = self.add_project(self.correct_project)
+        add_project_response = self._add_project(self.correct_project)
         add_project_response_data = add_project_response.get_json()
 
         project = add_project_response_data['project']
@@ -257,7 +304,7 @@ class TestProjects(unittest.TestCase):
 
     def test_delete_project_with_tasks(self):
         # Given there's project with related task
-        project = self.add_project_with_task()
+        project = self._add_project_with_task()
         project_id = project['id']
 
         # When that project is attempted to be deleted
@@ -274,7 +321,7 @@ class TestProjects(unittest.TestCase):
 
     def test_get_single_project_successfully(self):
         # Given there's existing project in database
-        add_project_response = self.add_project(self.correct_project)
+        add_project_response = self._add_project(self.correct_project)
         add_project_response_data = add_project_response.get_json()
 
         project = add_project_response_data['project']
@@ -309,88 +356,12 @@ class TestProjects(unittest.TestCase):
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Queried project was not found')
 
-class TestTasks(unittest.TestCase):
-    def setUp(self):
-        app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{basedir}/tests/{test_db_name}'
-
-        self.app = app.test_client()
-        self.correct_project = {
-            'name':'Test Project',
-            'description': 'This is test project'
-        }
-
-        self.correct_task = {
-            'name': 'Test Task'
-        }
-
-        self.correct_tasks = [{
-            'name':'Test Task 1'
-        },
-        {
-            'name':'Test Task 2'
-        }]
-
-        self.correct_assignee = {
-            'name': "Matti Meikäläinen"
-        }
-
-        db.drop_all()
-        db.create_all()
-    
-    def add_project_for_task(self):
-        project_json = json.dumps(self.correct_project)
-        response = self.app.post(
-            '/api/project',
-            headers=json_header,
-            data=project_json
-        )
-        response_data = response.get_json()
-        project = response_data['project']
-        return project
-
-    def add_task(self, task):
-        project = self.add_project_for_task()
-        project_id = project['id']
-        
-        task['project_id'] = project_id
-        task_json = json.dumps(task)
-        response = self.app.post(
-            '/api/task',
-            headers=json_header,
-            data=task_json
-        )
-        return response
-
-    def _add_user(self, user):
-        user_json = json.dumps(user)
-        response = self.app.post(
-            '/api/user',
-            headers=json_header,
-            data=user_json
-        )
-        return response
-
-    def _get_user(self, user_id):
-        response = self.app.get(
-            f'/api/user/{user_id}',
-            headers=json_header
-        )
-        return response
-
-    def _set_key_to_number_999(self, data_key):
-        incorrect_data = self.correct_task
-        incorrect_data[data_key] = 999
-        return incorrect_data
-
-    def tearDown(self):
-        db.drop_all()
-
+class TestTasks(BaseTest):
     def test_add_task_with_correct_data(self):
         # Given there's project in database
 
         # When new task with correct data is added to empty database
-        response = self.add_task(self.correct_task)
+        response = self._add_task(self.correct_task)
         response_data = response.get_json()
         project_id = response_data['task']['project_id']
         # Then
@@ -398,7 +369,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['status'], 'success')
         self.assertEqual(response_data['message'], 'Task added successfully!')
         self.assertEqual(response_data['task']['id'], 1)
-        self.assertEqual(response_data['task']['name'], 'Test Task')
+        self.assertEqual(response_data['task']['name'], 'Test task')
         self.assertEqual(response_data['task']['completed'], False)
 
         self.assertEqual(response_data['task']['updated_at'], None)
@@ -430,7 +401,7 @@ class TestTasks(unittest.TestCase):
         incorrect_name_task = self._set_key_to_number_999('name')
 
         # When new task with wrong type name is submitted
-        response = self.add_task(incorrect_name_task)
+        response = self._add_task(incorrect_name_task)
         response_data = response.get_json()
 
         # Then
@@ -444,7 +415,7 @@ class TestTasks(unittest.TestCase):
         no_name_task['name'] = None
 
         # When new task with no name is added to empty database
-        response = self.add_task(no_name_task)
+        response = self._add_task(no_name_task)
         response_data = response.get_json()
 
         # Then
@@ -457,7 +428,7 @@ class TestTasks(unittest.TestCase):
         incorrect_completed_task = self._set_key_to_number_999('completed')
 
         # When new task with wrong type completed is submitted
-        response = self.add_task(incorrect_completed_task)
+        response = self._add_task(incorrect_completed_task)
         response_data = response.get_json()
 
         # Then
@@ -470,7 +441,7 @@ class TestTasks(unittest.TestCase):
         incorrect_created_at_task = self._set_key_to_number_999('created_at')
 
         # When new task with wrong type completed is submitted
-        response = self.add_task(incorrect_created_at_task)
+        response = self._add_task(incorrect_created_at_task)
         response_data = response.get_json()
 
         # Then
@@ -483,7 +454,7 @@ class TestTasks(unittest.TestCase):
         incorrect_updated_at_task = self._set_key_to_number_999('updated_at')
 
         # When new task with wrong type completed is submitted
-        response = self.add_task(incorrect_updated_at_task)
+        response = self._add_task(incorrect_updated_at_task)
         response_data = response.get_json()
 
         # Then
@@ -496,7 +467,7 @@ class TestTasks(unittest.TestCase):
         incorrect_planned_complete_date_task = self._set_key_to_number_999('planned_complete_date')
 
         # When new task with wrong type completed is submitted
-        response = self.add_task(incorrect_planned_complete_date_task)
+        response = self._add_task(incorrect_planned_complete_date_task)
         response_data = response.get_json()
     
         # Then
@@ -509,7 +480,7 @@ class TestTasks(unittest.TestCase):
         incorrect_completed_at_task = self._set_key_to_number_999('completed_at')
 
         # When new task with wrong type completed is submitted
-        response = self.add_task(incorrect_completed_at_task)
+        response = self._add_task(incorrect_completed_at_task)
         response_data = response.get_json()
 
         # Then
@@ -517,22 +488,22 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Something went wrong when trying to add task')
 
-    def add_assignee_to_task(self):
+    def test_add_assignee_to_task(self):
         # Given there's existing user and task in the DB
-        add_task_response = self.add_task(self.correct_task)
+        add_task_response = self._add_task(self.correct_task)
         add_task_response_data = add_task_response.get_json()
         task = add_task_response_data['task']
 
-        add_assignee_response = self._add_user(self.correct_assignee)
+        add_assignee_response = self._add_user(self.correct_user)
         add_assignee_response_data = add_assignee_response.get_json()
         assignee = add_assignee_response_data['user']
 
         # Merging the two dictionaries together
         task_and_assignee = {
-            **task,
-            **assignee
+            'task': task,
+            'user': assignee
         }
-        task_and_assignee_json = json.dumps(task_and_assignee)
+        task_and_assignee_json = json.dumps(task_and_assignee)    
 
         # When we add assignee to existing task
         response = self.app.post(
@@ -548,24 +519,32 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['message'], 'Assignee added successfully!')
 
         self.assertEqual(response_data['task']['id'], 1)
-        self.assertEqual(response_data['task']['name'], 'Test Task')
+        self.assertEqual(response_data['task']['name'], 'Test task')
         self.assertEqual(response_data['task']['completed'], False)
 
         self.assertEqual(response_data['task']['updated_at'], None)
         self.assertEqual(response_data['task']['planned_complete_date'], None)
         self.assertEqual(response_data['task']['planned_complete_date'], None)
 
-        self.assertTrue(isinstance(response_data['task']['assignees']), list)
+        self.assertTrue(isinstance(response_data['task']['assignees'], list))
         self.assertEqual(len(response_data['task']['assignees']), 1)
         self.assertEqual(response_data['task']['assignees'][0], assignee)
+
+    def test_add_assignee_to_task_without_task(self):
+        return
+
+    def test_add_assignee_to_task_without_assignee(self):
+        return
+
+    def test_remove_assignee_from_task(self):
+        return
 
 
     def test_get_many_tasks(self):
         # Given there's multiple projects in database
         for task in self.correct_tasks:
-            self.add_task(task)
+            self._add_task(task)
             
-        
         # When we query all tasks
         response = self.app.get('/api/tasks')
         response_data = response.get_json()
@@ -578,7 +557,7 @@ class TestTasks(unittest.TestCase):
 
     def test_delete_task_successfully(self):
         # Given we have one task in the database
-        add_task_response = self.add_task(self.correct_task)
+        add_task_response = self._add_task(self.correct_task)
         add_task_response_data = add_task_response.get_json()
 
         task = add_task_response_data['task']
@@ -613,7 +592,7 @@ class TestTasks(unittest.TestCase):
 
     def test_get_single_task_successfully(self):
         # Given there's existing task in database
-        add_task_response = self.add_task(self.correct_task)
+        add_task_response = self._add_task(self.correct_task)
         add_task_response_data = add_task_response.get_json()
 
         task = add_task_response_data['task']
@@ -648,35 +627,7 @@ class TestTasks(unittest.TestCase):
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Queried task was not found')
     
-class TestUser(unittest.TestCase):
-
-    def setUp(self):
-        app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{basedir}/tests/{test_db_name}'
-
-        self.app = app.test_client()
-        self.correct_user = {
-            'name': 'Matti Meikäläinen'
-        }
-        self.correct_users = [
-            {'name': 'Masa'},
-            {'name': 'Erkki Esimerkki'}
-        ]
-
-        db.drop_all()
-        db.create_all()
-
-    def tearDown(self):
-        db.drop_all()
-
-    def _add_user(self, user):
-        user_json = json.dumps(user)
-        response = self.app.post(
-            '/api/user',
-            headers=json_header,
-            data=user_json
-        )
-        return response
+class TestUser(BaseTest):
 
     def _get_user(self, user_id):
         response = self.app.get(
@@ -684,11 +635,6 @@ class TestUser(unittest.TestCase):
             headers=json_header
         )
         return response
-
-    def _set_key_to_number_999(self, data_key):
-        incorrect_data = self.correct_user
-        incorrect_data[data_key] = 999
-        return incorrect_data
 
     def test_add_user_with_correct_data(self):
         # Given there's nothing in the database

@@ -76,6 +76,10 @@ class Task(db.Model):
         self.assignees.append(assignee)
         db.session.add(self)
 
+    def remove_assignee(self, assignee):
+        self.assignees.remove(assignee)
+        db.session.add(self)
+
     def __repr__(self):
         return f'<Task {self.name} | Created at {self.created_at} | {self.completed} | Completed at {self.completed_at}>'
 

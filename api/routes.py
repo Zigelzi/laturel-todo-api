@@ -196,9 +196,11 @@ def add_assignee_to_task():
         task.add_assignee(assignee)
         db.session.commit()
         response_object['task'] = task_schema.dump(task)
+        response_object['message'] = 'Assignee added successfully!'
         json_response = jsonify(response_object)
         return make_response(json_response, 200)
     except Exception as e:
+        traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to add assignee to task'
         json_response = jsonify(response_object)
