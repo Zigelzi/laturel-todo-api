@@ -185,7 +185,7 @@ def get_all_tasks():
         json_response = jsonify(response_object)
         return make_response(json_response, 400)
 
-@app.route('/api/task/assignee', methods=['POST'])
+@app.route('/api/task/add_assignee', methods=['POST'])
 def add_assignee_to_task():
     response_object = {'status': status_msg_success}
     try:
@@ -221,8 +221,8 @@ def add_assignee_to_task():
         json_response = jsonify(response_object)
         return make_response(json_response, 400)
 
-@app.route('/api/task/assignee', methods=['DELETE'])
-def remove_assignee_to_task():
+@app.route('/api/task/remove_assignee', methods=['POST'])
+def remove_assignee_from_task():
     response_object = {'status': status_msg_success}
     try:
         request_data = request.get_json()
@@ -241,6 +241,9 @@ def remove_assignee_to_task():
             response_object['message'] = 'Task that assignee was tried to be removed from wasn\'t found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
+        traceback.print_exc()
+        request_data = request.get_json()
+        print(request_data)
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to remove assignee from task'
         json_response = jsonify(response_object)

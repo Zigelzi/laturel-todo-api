@@ -367,7 +367,7 @@ class TestTasks(BaseTest):
 
         # When we add assignee to existing task
         response = self.app.post(
-            f'/api/task/assignee',
+            f'/api/task/add_assignee',
             headers=json_header,
             data=assignee_and_task_json
         )
@@ -382,8 +382,8 @@ class TestTasks(BaseTest):
         assignee_and_task_json = json.dumps(assignee_and_task) 
 
         # When we add assignee to existing task
-        response = self.app.delete(
-            f'/api/task/assignee',
+        response = self.app.post(
+            f'/api/task/remove_assignee',
             headers=json_header,
             data=assignee_and_task_json
         )
