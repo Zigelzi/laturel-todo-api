@@ -16,7 +16,7 @@ class Project(db.Model):
     completed = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     planned_complete_date = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
     
@@ -48,12 +48,11 @@ class Task(db.Model):
     completed = db.Column(db.Boolean, nullable=False, default=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     planned_complete_date = db.Column(db.DateTime)
     completed_at = db.Column(db.DateTime)
 
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
-    assignee_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
     comments = db.relationship('Comment', backref='task', lazy='dynamic')
     assignees = db.relationship('User',
@@ -86,7 +85,6 @@ class Task(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
 
     def save(self):
@@ -107,7 +105,7 @@ class Comment(db.Model):
     content = db.Column(db.String(300), nullable=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     task_id = db.Column(db.Integer, db.ForeignKey('task.id'))

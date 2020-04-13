@@ -2,7 +2,7 @@ import os
 import unittest
 import sys
 import json
-import datetime
+from datetime import datetime
 
 parent_dir = os.path.dirname
 test_db_name = 'test.db'
@@ -60,8 +60,8 @@ class BaseTest(unittest.TestCase):
     def tearDown(self):
         db.drop_all()
 
-    def _set_key_to_number_999(self, data_key):
-        incorrect_data = self.correct_project
+    def _set_key_to_number_999(self, correct_data, data_key):
+        incorrect_data = correct_data
         incorrect_data[data_key] = 999
         return incorrect_data
 
@@ -148,7 +148,7 @@ class TestProjects(BaseTest):
     
     def test_add_project_with_incorrect_name(self):
         # Given we have project with incorrect type name
-        incorrect_name_project = self._set_key_to_number_999('name')
+        incorrect_name_project = self._set_key_to_number_999(self.correct_project, 'name')
 
         # When we try to add the incorrect data to database
         response = self._add_project(incorrect_name_project)
@@ -161,7 +161,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_description(self):
         # Given we have project with incorrect type description
-        incorrect_description_project = self._set_key_to_number_999('description')
+        incorrect_description_project = self._set_key_to_number_999(self.correct_project, 'description')
 
         # When we try to add the incorrect data to database
         response = self._add_project(incorrect_description_project)
@@ -188,7 +188,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_completed(self):
         # Given there is project in database and we have project with incorrect name
-        incorrect_completed_project = self._set_key_to_number_999('completed')
+        incorrect_completed_project = self._set_key_to_number_999(self.correct_project, 'completed')
 
         # When new project with wrong type completed is submitted
         response = self._add_project(incorrect_completed_project)
@@ -201,7 +201,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_created_at(self):
         # Given there is project in database and we have project with incorrect created_at
-        incorrect_created_at_project = self._set_key_to_number_999('created_at')
+        incorrect_created_at_project = self._set_key_to_number_999(self.correct_project, 'created_at')
 
         # When new project with wrong type completed is submitted
         response = self._add_project(incorrect_created_at_project)
@@ -214,7 +214,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_updated_at(self):
         # Given there is project in database and we have project with incorrect updated_at
-        incorrect_updated_at_project = self._set_key_to_number_999('updated_at')
+        incorrect_updated_at_project = self._set_key_to_number_999(self.correct_project, 'updated_at')
 
         # When new project with wrong type completed is submitted
         response = self._add_project(incorrect_updated_at_project)
@@ -227,7 +227,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_planned_complete_date(self):
         # Given there is project in database and we have project with incorrect planned_complete_date
-        incorrect_planned_complete_date_project = self._set_key_to_number_999('planned_complete_date')
+        incorrect_planned_complete_date_project = self._set_key_to_number_999(self.correct_project, 'planned_complete_date')
 
         # When new project with wrong type completed is submitted
         response = self._add_project(incorrect_planned_complete_date_project)
@@ -240,7 +240,7 @@ class TestProjects(BaseTest):
 
     def test_add_project_with_incorrect_completed_at(self):
         # Given there is project in database and we have project with incorrect completed_at
-        incorrect_completed_at_project = self._set_key_to_number_999('completed_at')
+        incorrect_completed_at_project = self._set_key_to_number_999(self.correct_project, 'completed_at')
 
         # When new project with wrong type completed is submitted
         response = self._add_project(incorrect_completed_at_project)
@@ -389,6 +389,18 @@ class TestTasks(BaseTest):
         )
         return response
 
+    def _update_task(self, task):
+        task_json = json.dumps(task)
+        task_id = None
+        if 'id' in task:
+            task_id = task['id']
+        response = self.app.put(
+            f'/api/task/{task_id}',
+            headers=json_header,
+            data=task_json
+        )
+        return response
+
     def test_add_task_with_correct_data(self):
         # Given there's project in database
 
@@ -430,7 +442,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_name(self):
         # Given there is project in database and we have task with incorrect name
-        incorrect_name_task = self._set_key_to_number_999('name')
+        incorrect_name_task = self._set_key_to_number_999(self.correct_task, 'name')
 
         # When new task with wrong type name is submitted
         response = self._add_task(incorrect_name_task)
@@ -457,7 +469,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_completed(self):
         # Given there is project in database and we have task with incorrect name
-        incorrect_completed_task = self._set_key_to_number_999('completed')
+        incorrect_completed_task = self._set_key_to_number_999(self.correct_task, 'completed')
 
         # When new task with wrong type completed is submitted
         response = self._add_task(incorrect_completed_task)
@@ -470,7 +482,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_created_at(self):
         # Given there is project in database and we have task with incorrect created_at
-        incorrect_created_at_task = self._set_key_to_number_999('created_at')
+        incorrect_created_at_task = self._set_key_to_number_999(self.correct_task, 'created_at')
 
         # When new task with wrong type completed is submitted
         response = self._add_task(incorrect_created_at_task)
@@ -483,7 +495,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_updated_at(self):
         # Given there is project in database and we have task with incorrect updated_at
-        incorrect_updated_at_task = self._set_key_to_number_999('updated_at')
+        incorrect_updated_at_task = self._set_key_to_number_999(self.correct_task, 'updated_at')
 
         # When new task with wrong type completed is submitted
         response = self._add_task(incorrect_updated_at_task)
@@ -496,7 +508,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_planned_complete_date(self):
         # Given there is project in database and we have task with incorrect planned_complete_date
-        incorrect_planned_complete_date_task = self._set_key_to_number_999('planned_complete_date')
+        incorrect_planned_complete_date_task = self._set_key_to_number_999(self.correct_task, 'planned_complete_date')
 
         # When new task with wrong type completed is submitted
         response = self._add_task(incorrect_planned_complete_date_task)
@@ -509,7 +521,7 @@ class TestTasks(BaseTest):
 
     def test_add_task_with_incorrect_completed_at(self):
         # Given there is project in database and we have task with incorrect completed_at
-        incorrect_completed_at_task = self._set_key_to_number_999('completed_at')
+        incorrect_completed_at_task = self._set_key_to_number_999(self.correct_task, 'completed_at')
 
         # When new task with wrong type completed is submitted
         response = self._add_task(incorrect_completed_at_task)
@@ -780,6 +792,7 @@ class TestTasks(BaseTest):
         # Then
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Tasks deleted succesfully!')
 
     def test_delete_non_existing_task(self):
         # Given there's nothing in the database
@@ -833,7 +846,247 @@ class TestTasks(BaseTest):
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response_data['status'], 'fail')
         self.assertEqual(response_data['message'], 'Queried task was not found')
+
+    def test_update_task_name(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+
+        # When we update the task name
+        task = dict(original_task) # Copy the dictionary, don't reference the original
+        task['name'] = 'Updated task name'
+        response = self._update_task(task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Task updated successfully!')
+
+        self.assertNotEqual(response_data['task'], original_task)
+        self.assertNotEqual(response_data['task']['updated_at'], original_task['updated_at'])
+
+        self.assertEqual(response_data['task']['name'], 'Updated task name')
+
+        self.assertEqual(response_data['task']['completed'], original_task['completed'])
+        self.assertEqual(response_data['task']['created_at'], original_task['created_at'])
+        self.assertEqual(response_data['task']['planned_complete_date'], original_task['planned_complete_date'])
+        self.assertEqual(response_data['task']['completed_at'], original_task['completed_at'])
+        self.assertEqual(response_data['task']['project_id'], original_task['project_id'])
+        self.assertEqual(response_data['task']['comments'], original_task['comments'])
+        self.assertEqual(response_data['task']['assignees'], original_task['assignees'])
+
+    def test_update_task_completed(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+
+        # When we update the task completed status
+        task = dict(original_task) # Copy the dictionary, don't reference the original
+        now = datetime.utcnow()
+        now_iso = now.isoformat()
+
+        task['completed'] = True
+        task['completed_at'] = now_iso
+        response = self._update_task(task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Task updated successfully!')
+
+        self.assertNotEqual(response_data['task'], original_task)
+        self.assertNotEqual(response_data['task']['updated_at'], original_task['updated_at'])
+
+        self.assertEqual(response_data['task']['completed'], True)
+        self.assertEqual(response_data['task']['completed_at'], now_iso)
+
+        self.assertEqual(response_data['task']['name'], original_task['name'])
+        self.assertEqual(response_data['task']['created_at'], original_task['created_at'])
+        self.assertEqual(response_data['task']['planned_complete_date'], original_task['planned_complete_date'])
+        self.assertEqual(response_data['task']['project_id'], original_task['project_id'])
+        self.assertEqual(response_data['task']['comments'], original_task['comments'])
+        self.assertEqual(response_data['task']['assignees'], original_task['assignees'])
+
+    def test_update_task_planned_complete_date(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+
+        # When we update the task planned completion date
+        task = dict(original_task) # Copy the dictionary, don't reference the original
+        now = datetime.utcnow()
+        now_iso = now.isoformat()
+        task['planned_complete_date'] = now_iso
+        response = self._update_task(task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response_data['status'], 'success')
+        self.assertEqual(response_data['message'], 'Task updated successfully!')
+
+        self.assertNotEqual(response_data['task'], original_task)
+        self.assertNotEqual(response_data['task']['updated_at'], original_task['updated_at'])
+
+        self.assertEqual(response_data['task']['planned_complete_date'], now_iso)
+
+        self.assertEqual(response_data['task']['name'], original_task['name'])
+        self.assertEqual(response_data['task']['completed'], original_task['completed'])
+        self.assertEqual(response_data['task']['created_at'], original_task['created_at'])
+        self.assertEqual(response_data['task']['completed_at'], original_task['completed_at'])
+        self.assertEqual(response_data['task']['project_id'], original_task['project_id'])
+        self.assertEqual(response_data['task']['comments'], original_task['comments'])
+        self.assertEqual(response_data['task']['assignees'], original_task['assignees'])
+
+    def test_update_task_without_task(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        
+        # When we try to update the task with empty task
+        empty_task = {}
+        response = self._update_task(empty_task)
+        response_data = response.get_json()
+        
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertIn(b'The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.', response.data)
+
+    def test_update_non_existing_task(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with empty task
+        non_existing_task = dict(original_task) # Copy the dictionary, don't reference the original
+        non_existing_task['id'] = 2
+        response = self._update_task(non_existing_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Task not found')
+
+    def test_update_task_with_incorrect_name(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type name
+        incorrect_name_task = self._set_key_to_number_999(original_task, 'name')
+        response = self._update_task(incorrect_name_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
+    def test_update_task_with_incorrect_completed(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type completed status
+        incorrect_name_task = self._set_key_to_number_999(original_task, 'completed')
+        response = self._update_task(incorrect_name_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
     
+    def test_update_task_with_incorrect_created_at(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type completed status
+        incorrect_completed_task = self._set_key_to_number_999(original_task, 'completed')
+        response = self._update_task(incorrect_completed_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
+    def test_update_task_with_incorrect_updated_at(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type updated_at date
+        incorrect_updated_at_task = self._set_key_to_number_999(original_task, 'updated_at')
+        response = self._update_task(incorrect_updated_at_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
+    def test_update_task_with_incorrect_planned_complete_date(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type planned_complete_date date
+        incorrect_planned_complete_date_task = self._set_key_to_number_999(original_task, 'planned_complete_date')
+        response = self._update_task(incorrect_planned_complete_date_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
+    def test_update_task_with_incorrect_completed_at(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type completed_at date
+        incorrect_completed_at_task = self._set_key_to_number_999(original_task, 'completed_at')
+        response = self._update_task(incorrect_completed_at_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
+    def test_update_task_with_incorrect_project_id(self):
+        # Given there's existing task and project for it in the database
+        add_task_response = self._add_task(self.correct_task)
+        add_task_response_data = add_task_response.get_json()
+        original_task = add_task_response_data['task']
+        
+        # When we try to update the task with incorrect type project_id
+        incorrect_project_id_task = dict(original_task)
+        incorrect_project_id_task['project_id'] = 'Invalid'
+        response = self._update_task(incorrect_project_id_task)
+        response_data = response.get_json()
+
+        # Then
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response_data['status'], 'fail')
+        self.assertEqual(response_data['message'], 'Something went wrong when trying to update task')
+
 class TestUser(BaseTest):
 
     def _get_user(self, user_id):
@@ -860,7 +1113,7 @@ class TestUser(BaseTest):
 
     def test_add_user_incorrect_name(self):
         # Given we have user with incorrect type in name key
-        incorrect_name_user = self._set_key_to_number_999('name')
+        incorrect_name_user = self._set_key_to_number_999(self.correct_user, 'name')
 
         # When we try to add the incorrect data to database
         response = self._add_user(incorrect_name_user)

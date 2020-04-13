@@ -213,11 +213,36 @@ def add_assignee_to_task():
             response_object['message'] = 'Task that assignee was tried to be added to wasn\'t found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
-        request_data = request.get_json()
-        traceback.print_exc()
-        print(request_data)
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to add assignee to task'
+        json_response = jsonify(response_object)
+        return make_response(json_response, 400)
+
+@app.route('/api/task/<int:task_id>', methods=['PUT'])
+def update_task(task_id):
+    response_object = {'status': status_msg_success}
+    try:
+        request_data = request.get_json()
+        task = task_schema.load(request_data)
+        task = Task.query.get(task.id)
+        if task:
+            task.save()
+            db.session.commit()
+            response_object['task'] = task_schema.dump(task)
+            response_object['message'] = 'Task updated successfully!'
+            json_response = jsonify(response_object)
+            return make_response(jsonify(response_object), 200)
+        else:
+            response_object['status'] = status_msg_fail
+            response_object['message'] = 'Task not found'
+            json_response = jsonify(response_object)
+            return make_response(jsonify(response_object), 404)
+    except Exception as e:
+        # traceback.print_exc()
+        # request_data = request.get_json()
+        # print(request_data)
+        response_object['status'] = status_msg_fail
+        response_object['message'] = 'Something went wrong when trying to update task'
         json_response = jsonify(response_object)
         return make_response(json_response, 400)
 
@@ -241,9 +266,6 @@ def remove_assignee_from_task():
             response_object['message'] = 'Task that assignee was tried to be removed from wasn\'t found'
             return make_response(jsonify(response_object), 404)
     except Exception as e:
-        traceback.print_exc()
-        request_data = request.get_json()
-        print(request_data)
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to remove assignee from task'
         json_response = jsonify(response_object)
