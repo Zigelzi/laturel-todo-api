@@ -223,12 +223,16 @@ def update_task(task_id):
     response_object = {'status': status_msg_success}
     try:
         request_data = request.get_json()
-        task = task_schema.load(request_data)
-        task = Task.query.get(task.id)
+        task = Task.query.get(task_id)
         if task:
-            task.save()
+            # Saving the DB status to variable because loading touches the DB entry and makes
+            # the session dirty
+            task_complete_status = task.completed
+            request_task = task_schema.load(request_data)
+            request_task = request_task.update_completed_state(task_complete_status)
+            request_task.save()
             db.session.commit()
-            response_object['task'] = task_schema.dump(task)
+            response_object['task'] = task_schema.dump(request_task)
             response_object['message'] = 'Task updated successfully!'
             json_response = jsonify(response_object)
             return make_response(jsonify(response_object), 200)
@@ -238,9 +242,7 @@ def update_task(task_id):
             json_response = jsonify(response_object)
             return make_response(jsonify(response_object), 404)
     except Exception as e:
-        # traceback.print_exc()
-        # request_data = request.get_json()
-        # print(request_data)
+        traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to update task'
         json_response = jsonify(response_object)

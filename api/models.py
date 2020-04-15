@@ -79,6 +79,20 @@ class Task(db.Model):
         self.assignees.remove(assignee)
         db.session.add(self)
 
+    def update_completed_state(self, old_task_completed):
+        print("Self completed")
+        print(self.completed)
+        print("OG task completed")
+        print(old_task_completed)
+        if self.completed != old_task_completed:
+            print("Got to first if")
+            if self.completed:
+                print("Got to second if")
+                self.completed_at = datetime.utcnow()
+            else:
+                self.completed_at = None
+        return self
+
     def __repr__(self):
         return f'<Task {self.name} | Created at {self.created_at} | {self.completed} | Completed at {self.completed_at}>'
 

@@ -900,9 +900,10 @@ class TestTasks(BaseTest):
 
         self.assertNotEqual(response_data['task'], original_task)
         self.assertNotEqual(response_data['task']['updated_at'], original_task['updated_at'])
+        self.assertNotEqual(response_data['task']['completed_at'], original_task['completed_at'])
 
         self.assertEqual(response_data['task']['completed'], True)
-        self.assertEqual(response_data['task']['completed_at'], now_iso)
+        
 
         self.assertEqual(response_data['task']['name'], original_task['name'])
         self.assertEqual(response_data['task']['created_at'], original_task['created_at'])
