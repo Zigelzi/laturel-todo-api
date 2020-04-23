@@ -16,10 +16,10 @@ then
     echo "Creating the database tables..."
     python manage.py create_db
     echo "Tables created"
-    
-    echo "Performing any database migrations..."
-    python manage.py db upgrade
-    echo "Migrations completed successfully"
 fi
+
+echo "Performing any database migrations..."
+python manage.py db upgrade
+echo "Migrations completed successfully"
 
 exec "$@"
