@@ -291,6 +291,7 @@ def add_user():
         json_response = jsonify(response_object)
         return make_response(json_response, 200)
     except Exception as e:
+        traceback.print_exc()
         response_object['status'] = status_msg_fail
         response_object['message'] = 'Something went wrong when trying to add user'
         db.session.rollback()
