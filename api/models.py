@@ -1,4 +1,5 @@
 from api import db, ma
+from api.utilities import generate_uuid
 from datetime import datetime
 
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
@@ -14,6 +15,7 @@ class Project(db.Model):
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255))
     completed = db.Column(db.Boolean, nullable=False, default=False)
+    slug = db.Column(db.String(36), nullable=False, unique=True, default=generate_uuid)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
